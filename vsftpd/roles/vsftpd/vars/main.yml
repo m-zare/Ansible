@@ -1,0 +1,7 @@
+---
+ users_list:
+   - { name: 'user', password: '123', permission: 'YES'}
+   - { name: 'user6', password: '123', permission: 'YES'}
+   - { name: 'user1', password: '1234', permission: 'YES'}
+
+   

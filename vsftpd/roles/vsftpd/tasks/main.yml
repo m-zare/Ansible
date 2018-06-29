@@ -1,0 +1,87 @@
+ - name: installs
+   yum:
+    state: latest
+    name: '{{item}}'
+   with_items:
+     - vsftpd
+     - httpd-tools
+     - policycoreutils
+     - libselinux-python
+     - libsemanage-python
+
+ - name: create dir /app
+   file:
+    path: /app
+    state: directory
+    
+ - name: copy files to /app
+   copy: 
+    src: '{{item}}'
+    dest: /app
+   with_items:
+     - pam_pwdfile-0.99-1.puias6.i686.rpm
+#     - pam_pwdfile-0.99-1.puias6.x86_64.rpm
+     - python-passlib-1.5.3-1.el6.noarch.rpm
+
+ - name: install rpms from a local file
+   yum:
+    name: '{{item}}'
+    state: present
+   with_items:
+     - /app/pam_pwdfile-0.99-1.puias6.i686.rpm
+     - /app/python-passlib-1.5.3-1.el6.noarch.rpm
+
+ - name: copy vsftpd.virtual.j2
+   template:
+    src: vsftpd.virtual.j2
+    dest: /etc/pam.d/vsftpd.virtual
+
+ - name: create dir vsftpd-user-conf
+   file:
+    path: /etc/vsftpd/{{item}}
+    state: directory
+    mode: 0777
+   with_items:
+     - vsftpd-user-conf 
+
+ - name: create dir sites
+   file:
+    path: /var/vsftpd/{{item}}
+    state: directory
+    mode: 0777
+   with_items:
+     - sites
+
+ - name: copy vsftpd.conf.j2
+   template:
+    src: vsftpd.conf.j2
+    dest: /etc/vsftpd/vsftpd.conf
+
+ - name: create file ftp.passwd
+   file:
+    path: /etc/vsftpd/ftp.passwd
+    state: touch
+
+ - name: create file for users
+   template:
+    src: ftpuser.j2 
+    dest: /etc/vsftpd/vsftpd-user-conf/{{ item.name }}
+   with_items: '{{ users_list }}'
+
+ - name: create dir sites/users
+   file:
+    path: /var/vsftpd/sites/{{ item.name }}
+    state: directory
+    mode: 0777
+   with_items: '{{ users_list }}'
+
+ - name: passwd for users
+   shell: htpasswd -b /etc/vsftpd/ftp.passwd {{ item.name }} {{ item.password }}
+   with_items: '{{ users_list }}'
+   notify: restart vsftpd
+
+ - name: copy iptables.j2
+   template:
+    src: iptables.j2
+    dest: /etc/sysconfig/iptables
+   notify: restart iptables
