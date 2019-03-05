@@ -1,3 +1,9 @@
+# RHEL Base distribution kickstart generator
+
+These playbook can be used to generate ks.cfg file for automated installation.
+Network settings, Partitioning and packages can be managed by using the play.
+
+
 # Variables
 
 **Redhat and CentOS, 6 and 7:**
