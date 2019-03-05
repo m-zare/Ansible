@@ -1,0 +1,745 @@
+# version=DEVEL
+# {{ ansible_date_time.date }}-{{ ansible_date_time.time }}
+# System authorization information
+auth --enableshadow --passalgo=sha512
+
+# Use CDROM installation media
+cdrom
+
+# Install mode
+text
+
+# Reboot after install
+# Use of the reboot option may result in an endless installation loop.
+reboot
+
+# Run the Setup Agent on first boot
+firstboot --disable
+
+ignoredisk --only-use=sda
+
+# Keyboard layouts
+keyboard us
+
+# System language
+lang en_US.UTF-8
+
+# Network information
+{% for network in portgroup %}
+{% if network.dns=="0.0.0.0" or network.dns=="" %}
+{% set ns = "--nodns" %}
+{% else %}
+{% set ns = "--nameserver="+ network.dns %} 
+{% endif %}
+{% if network.gateway=="0.0.0.0" or network.gateway=="" %}
+network  --bootproto=static --device={{ network.mac_address }} --onboot=yes --noipv6 --ip={{ network.ip }} --netmask={{ network.netmask }} --nodefroute {{ ns }}
+{% else %}
+network  --bootproto=static --device={{ network.mac_address }} --onboot=yes --noipv6 --ip={{ network.ip }} --netmask={{ network.netmask }} --gateway={{ network.gateway }} {{ ns }}
+{% endif %}
+# dns: should be like (--nameserver=192.168.2.1,192.168.3.1) or (--nodns) for not defining any dns
+{% endfor %}
+network  --hostname={{ hostname }}
+
+# Root password
+rootpw --plaintext {{ password }}
+
+selinux --disabled
+
+# System services
+services --disabled="chronyd" --enabled="snmpd"
+
+# Firewall
+firewall --enabled --port=2360:tcp --service=snmp --service=vnc-server
+
+# System timezone
+timezone --utc Asia/Tehran
+{% if pkgs=="gui" or pkgs=="gui_db_11.2" or pkgs=="gui_db_12.2" %}
+
+# X Window System configuration information
+xconfig --startxonboot
+{% endif %}
+
+zerombr
+
+# System bootloader configuration
+{% if uefi=="yes" or uefi==true %}
+bootloader --location=partition --driveorder=sda --append="nomodeset crashkernel=auto rhgb quiet"
+{% else %}
+bootloader --location=mbr --driveorder=sda --append="crashkernel=auto rhgb quiet" 
+{% endif %}
+# Partition clearing information
+clearpart --all --drives=sda
+# Disk partitioning information
+# partitioning_type= lvm, plain
+# fs_type= ext2, ext3, ext4, xfs, vfat
+{% if root_size==0 or root_size=="0" %}    
+autopart
+{% else %}
+part /boot --fstype="{{ fs_type }}" --ondisk=sda --size=512
+{% if uefi=="yes" or uefi==true %}
+part /boot/efi --fstype=efi --grow --maxsize=200 --size=50
+{% endif %}
+{% if partitioning_type == "lvm" %}        
+part pv.01 --size 1 --grow --ondisk=sda
+volgroup vg pv.01
+{% if swap_size==0 or swap_size=="0" %}    
+logvol swap  --name=swap --vgname=vg --fstype="swap" --recommended
+{% else %}
+logvol swap  --name=swap --vgname=vg --fstype="swap" --size={{ swap_size * 1024 }}
+{% endif %}
+{% if u01=="yes" or u01==true %}
+logvol /  --name=root --vgname=vg --fstype="{{ fs_type }}" --size={{ root_size * 1024 }}
+logvol /u01  --name=u01 --vgname=vg --fstype="{{ fs_type }}" --size=1 --grow
+{% else %}
+logvol /  --name=root --vgname=vg --fstype="{{ fs_type }}" --size={{ root_size * 1024 }} --grow
+{% endif %}
+{% elif partitioning_type == "plain" %}
+{% if swap_size==0 or swap_size=="0" %}
+part swap --fstype="swap" --recommended
+{% else %}   
+part swap --fstype="swap" --size={{ swap_size * 1024 }}
+{% endif %}
+{% if u01=="yes" or u01==true %}
+part / --fstype="{{ fs_type }}" --size={{ root_size * 1024 }}
+part /u01 --fstype="{{ fs_type }}" --grow --size=1
+{% else %}
+part / --fstype="{{ fs_type }}" --size={{ root_size * 1024 }} --grow
+{% endif %}
+{% endif %}
+{% endif %}
+%packages
+# This package is needed by firewall
+system-config-firewall-base
+net-snmp
+telnet
+{% if pkgs=="minimal" %}
+@core
+@server-policy
+{% elif pkgs=="gui" %}
+@base
+@client-mgmt-tools
+@core
+@debugging
+@basic-desktop
+@desktop-debugging
+@desktop-platform
+@directory-client
+@fonts
+@general-desktop
+@graphical-admin-tools
+@input-methods
+@internet-browser
+@java-platform
+@legacy-x
+@network-file-system-client
+@perl-runtime
+@print-client
+@remote-desktop-clients
+@server-platform
+@server-policy
+@x11
+mtools
+pax
+python-dmidecode
+oddjob
+wodim
+sgpio
+genisoimage
+device-mapper-persistent-data
+abrt-gui
+samba-winbind
+certmonger
+pam_krb5
+krb5-workstation
+libXmu
+perl-DBD-SQLite
+{% elif pkgs=="gui_db_11.2" %}
+@additional-devel
+@base
+@client-mgmt-tools
+@compat-libraries
+@core
+@debugging
+@basic-desktop
+@desktop-debugging
+@desktop-platform
+@development
+@directory-client
+@fonts
+@general-desktop
+@graphical-admin-tools
+@hardware-monitoring
+@input-methods
+@internet-browser
+@java-platform
+@large-systems
+@legacy-x
+@network-file-system-client
+@performance
+@perl-runtime
+@persian-support
+@print-client
+@remote-desktop-clients
+@system-management-snmp
+@server-platform
+@server-policy
+@system-admin-tools
+@x11
+httpd-devel
+pcre-devel
+libcap-devel
+libXinerama-devel
+openmotif-devel
+net-snmp-devel
+libgudev1-devel
+xz-devel
+libtopology-devel
+freeglut-devel
+kdegraphics-devel
+libibverbs-devel
+libuuid-devel
+kdepimlibs-devel
+libblkid-devel
+papi-devel
+libXmu-devel
+unique-devel
+xorg-x11-proto-devel
+gmp-devel
+kdepim-devel
+sane-backends-devel
+perl-Test-Pod
+kdemultimedia-devel
+startup-notification-devel
+libudev-devel
+cups-devel
+gstreamer-plugins-base-devel
+unixODBC-devel
+mpfr-devel
+numactl-devel
+libgnomeui-devel
+libbonobo-devel
+perl-Test-Pod-Coverage
+libtiff-devel
+junit
+SDL-devel
+libXau-devel
+tcp_wrappers-devel
+PyQt4-devel
+kdenetwork-devel
+kdelibs-devel
+libgcrypt-devel
+popt-devel
+gnome-python2-desktop
+hunspell-devel
+iptables-devel
+libdrm-devel
+libXrandr-devel
+snappy-devel
+libxslt-devel
+kdebase-devel
+tk-devel
+libnl-devel
+libXpm-devel
+java-1.8.0-openjdk-devel
+expat-devel
+e2fsprogs-devel
+kdebase-workspace-devel
+libglade2-devel
+tcl-devel
+libaio-devel
+libusb-devel
+gnutls-devel
+kdesdk-devel
+fuse-devel
+libXaw-devel
+libnl3-devel
+libhugetlbfs-devel
+yum-plugin-aliases
+tboot
+subscription-manager-migration-data
+nss_db
+linuxptp
+rsyslog-gssapi
+udftools
+rsyslog-relp
+audispd-plugins
+cryptsetup-reencrypt
+mtools
+yum-plugin-versionlock
+sox
+gdisk
+dumpet
+subscription-manager-migration
+gpm
+pax
+yum-plugin-tmprepo
+PyPAM
+python-dmidecode
+uuidd
+yum-presto
+oddjob
+wodim
+volume_key
+squashfs-tools
+star
+kernel-doc
+tunctl
+sgpio
+yum-plugin-changelog
+genisoimage
+brltty
+yum-plugin-verify
+x86info
+dos2unix
+cpupowerutils
+unix2dos
+kabi-yum-plugins
+edac-utils
+device-mapper-persistent-data
+logwatch
+rsyslog-gnutls
+convmv
+mkbootdisk
+ecryptfs-utils
+python-volume_key
+zsh
+ncurses-term
+systemtap-client
+sabayon-apply
+xguest
+tigervnc-server
+abrt-gui
+qt-mysql
+qt3-ODBC
+qt-odbc
+qt-postgresql
+qt3-PostgreSQL
+qt3-MySQL
+systemtap-sdt-devel
+dejagnu
+ElectricFence
+ant
+libstdc++-docs
+gcc-gnat
+expect
+mod_dav_svn
+perltidy
+cmake
+imake
+babel
+ksc
+kdewebdev
+PyYAML
+rpmdevtools
+compat-gcc-34
+systemtap-server
+cvs-inetd
+python-six
+gcc-java
+compat-gcc-34-g77
+jpackage-utils
+bzr
+mercurial
+chrpath
+gcc-objc
+python-requests
+rpmlint
+gcc-objc++
+compat-gcc-34-c++
+python-docs
+nasm
+samba-winbind
+certmonger
+pam_krb5
+krb5-workstation
+cjkuni-fonts-ghostscript
+bitmap-fixed-fonts
+bitmap-lucida-typewriter-fonts
+krb5-auth-dialog
+gnome-pilot-conduits
+gconf-editor
+byzanz
+alacarte
+seahorse-plugins
+rhythmbox-upnp
+gnome-games
+gedit-plugins
+gnome-pilot
+totem-upnp
+dvgrab
+vim-X11
+sabayon
+system-config-lvm
+audit-viewer
+setroubleshoot
+firstaidkit-gui
+lshw-gui
+system-config-kickstart
+wireshark-gnome
+policycoreutils-gui
+edac-utils
+i2c-tools
+lm_sensors
+java-1.8.0-openjdk
+numatop
+ksm_preload
+tuna
+openmotif
+libXmu
+libXp
+cachefilesd
+glusterfs-fuse
+sdparm
+papi
+sg3_utils
+tuned-utils
+tuned
+oprofile-jit
+perl-LDAP
+perl-DBD-SQLite
+perl-Date-Calc
+perl-suidperl
+perl-Date-Manip
+perl-Mozilla-LDAP
+perl-Frontier-RPC
+net-snmp-python
+net-snmp-perl
+libitm
+libcilkrts
+libmpx
+libatomic
+symlinks
+rrdtool
+pexpect
+dtach
+mc
+xdelta
+screen
+tree
+mgetty
+hardlink
+lshw
+expect
+conman
+crypto-utils
+scrub
+rdist
+vlock
+lsscsi
+xcb-util-image
+xcb-util-wm
+xcb-util-keysyms
+{% elif pkgs=="gui_db_12.2" %}
+@additional-devel
+@base
+@client-mgmt-tools
+@compat-libraries
+@console-internet
+@core
+@debugging
+@basic-desktop
+@desktop-platform
+@development
+@directory-client
+@fonts
+@general-desktop
+@graphical-admin-tools
+@hardware-monitoring
+@input-methods
+@internet-browser
+@java-platform
+@large-systems
+@network-file-system-client
+@performance
+@perl-runtime
+@server-platform
+@server-policy
+@system-admin-tools
+@x11
+httpd-devel
+pcre-devel
+libcap-devel
+libXinerama-devel
+openmotif-devel
+net-snmp-devel
+libgudev1-devel
+xz-devel
+libtopology-devel
+freeglut-devel
+kdegraphics-devel
+libibverbs-devel
+libuuid-devel
+kdepimlibs-devel
+libblkid-devel
+papi-devel
+libXmu-devel
+unique-devel
+xorg-x11-proto-devel
+gmp-devel
+kdepim-devel
+sane-backends-devel
+perl-Test-Pod
+kdemultimedia-devel
+startup-notification-devel
+libudev-devel
+cups-devel
+gstreamer-plugins-base-devel
+unixODBC-devel
+mpfr-devel
+numactl-devel
+libgnomeui-devel
+libbonobo-devel
+perl-Test-Pod-Coverage
+libtiff-devel
+junit
+SDL-devel
+libXau-devel
+tcp_wrappers-devel
+PyQt4-devel
+kdenetwork-devel
+kdelibs-devel
+libgcrypt-devel
+popt-devel
+gnome-python2-desktop
+hunspell-devel
+iptables-devel
+libdrm-devel
+libXrandr-devel
+snappy-devel
+libxslt-devel
+kdebase-devel
+tk-devel
+libnl-devel
+libXpm-devel
+java-1.8.0-openjdk-devel
+expat-devel
+e2fsprogs-devel
+kdebase-workspace-devel
+libglade2-devel
+tcl-devel
+libaio-devel
+libusb-devel
+gnutls-devel
+kdesdk-devel
+fuse-devel
+libXaw-devel
+libnl3-devel
+libhugetlbfs-devel
+yum-plugin-aliases
+tboot
+subscription-manager-migration-data
+nss_db
+linuxptp
+rsyslog-gssapi
+udftools
+rsyslog-relp
+audispd-plugins
+cryptsetup-reencrypt
+mtools
+yum-plugin-versionlock
+sox
+gdisk
+dumpet
+subscription-manager-migration
+gpm
+pax
+yum-plugin-tmprepo
+PyPAM
+python-dmidecode
+uuidd
+yum-presto
+oddjob
+wodim
+volume_key
+squashfs-tools
+star
+kernel-doc
+tunctl
+sgpio
+yum-plugin-changelog
+genisoimage
+brltty
+yum-plugin-verify
+x86info
+dos2unix
+cpupowerutils
+unix2dos
+kabi-yum-plugins
+edac-utils
+device-mapper-persistent-data
+logwatch
+rsyslog-gnutls
+convmv
+mkbootdisk
+ecryptfs-utils
+python-volume_key
+zsh
+ncurses-term
+systemtap-client
+sabayon-apply
+xguest
+tigervnc-server
+qt-mysql
+qt3-ODBC
+qt-odbc
+qt-postgresql
+qt3-PostgreSQL
+qt3-MySQL
+systemtap-sdt-devel
+dejagnu
+ElectricFence
+ant
+libstdc++-docs
+gcc-gnat
+expect
+mod_dav_svn
+perltidy
+cmake
+imake
+babel
+ksc
+kdewebdev
+PyYAML
+rpmdevtools
+compat-gcc-34
+systemtap-server
+cvs-inetd
+python-six
+gcc-java
+compat-gcc-34-g77
+jpackage-utils
+bzr
+mercurial
+chrpath
+gcc-objc
+python-requests
+rpmlint
+gcc-objc++
+compat-gcc-34-c++
+python-docs
+nasm
+samba-winbind
+certmonger
+pam_krb5
+krb5-workstation
+cjkuni-fonts-ghostscript
+bitmap-fixed-fonts
+bitmap-lucida-typewriter-fonts
+krb5-auth-dialog
+gnome-pilot-conduits
+gconf-editor
+byzanz
+alacarte
+seahorse-plugins
+rhythmbox-upnp
+gnome-games
+gedit-plugins
+gnome-pilot
+totem-upnp
+dvgrab
+vim-X11
+sabayon
+system-config-lvm
+audit-viewer
+setroubleshoot
+firstaidkit-gui
+lshw-gui
+system-config-kickstart
+wireshark-gnome
+policycoreutils-gui
+edac-utils
+i2c-tools
+lm_sensors
+java-1.8.0-openjdk
+numatop
+ksm_preload
+tuna
+cachefilesd
+glusterfs-fuse
+sdparm
+papi
+sg3_utils
+tuned-utils
+tuned
+oprofile-jit
+perl-LDAP
+perl-DBD-SQLite
+perl-Date-Calc
+perl-suidperl
+perl-Date-Manip
+perl-Mozilla-LDAP
+perl-Frontier-RPC
+libitm
+libcilkrts
+libmpx
+libatomic
+symlinks
+rrdtool
+pexpect
+dtach
+mc
+xdelta
+screen
+tree
+mgetty
+hardlink
+lshw
+expect
+conman
+crypto-utils
+scrub
+rdist
+vlock
+lsscsi
+xcb-util-image
+xcb-util-wm
+xcb-util-keysyms
+binutils
+compat-libcap1
+compat-libstdc++-33
+compat-libstdc++-33.i686
+glibc
+glibc.i686
+glibc-devel
+glibc-devel.i686
+ksh
+libaio
+libaio.i686
+libaio-devel
+libaio-devel.i686
+libX11
+libX11.i686
+libXau
+libXau.i686
+libXi
+libXi.i686
+libXtst
+libXtst.i686
+libgcc
+libgcc.i686
+libstdc++
+libstdc++.i686
+libstdc++-devel
+libstdc++-devel.i686
+libxcb
+libxcb.i686
+make
+nfs-utils
+net-tools
+smartmontools
+sysstat
+unixODBC
+unixODBC-devel
+gcc
+gcc-c++
+libXext
+libXext.i686
+zlib-devel
+zlib-devel.i686
+e2fsprogs
+e2fsprogs-libs
+libs
+libxcb.i686
+libxcb
+{% endif %}
+%end

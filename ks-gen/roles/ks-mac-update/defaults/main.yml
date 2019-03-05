@@ -1,0 +1,5 @@
+---
+vcenter_hostname: 192.168.10.180
+datacenter: "DC"
+ks_path: /root/volumes/ks_data
+distro: 7

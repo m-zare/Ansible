@@ -1,0 +1,5 @@
+---
+- name: Generate kickstart config file
+  hosts: all
+  roles:
+    - ks-gen

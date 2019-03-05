@@ -1,0 +1,41 @@
+- name: Gather facts from machine
+  vmware_guest_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ datacenter }}"
+    validate_certs: no
+    name: "{{ machine_name }}"
+  delegate_to: localhost
+  register: facts
+  when: machine_name is defined
+
+- name: Gather facts from machine
+  vmware_guest_facts:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ datacenter }}"
+    validate_certs: no
+    name: "{{ machine_id }} - {{ os }} {{ distro }} - {{ machine_usage }} - {{ project_name }}"
+  delegate_to: localhost
+  register: facts
+  when: machine_id is defined
+
+- name: Replace mng mac address in ks file
+  replace:
+    path: "{{ ks_path }}/centos{{ distro }}.cfg"
+    regexp: "mng_mac"
+    replace: "{{ facts.instance.hw_eth0.macaddress }}"
+
+- name: Replace srv mac address in ks file
+  replace:
+    path: "{{ ks_path }}/centos{{ distro }}.cfg"
+    regexp: "srv_mac"
+    replace: "{{ facts.instance.hw_eth1.macaddress }}"
+
+- name: create rhel ks file
+  copy:
+    remote_src: yes
+    src: "{{ ks_path }}/centos{{ distro }}.cfg"
+    dest: "{{ ks_path }}/rhel{{ distro }}.cfg"

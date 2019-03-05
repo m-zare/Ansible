@@ -1,0 +1,6 @@
+---
+- name: Update mac address
+  hosts: all
+  gather_facts: no
+  roles:
+    - ks-mac-update

@@ -1,0 +1,260 @@
+# version=DEVEL
+# {{ ansible_date_time.date }}-{{ ansible_date_time.time }}
+# System authorization information
+auth --enableshadow --passalgo=sha512
+
+# Use CDROM installation media
+cdrom
+
+# Install mode
+text
+
+# Accept eula
+eula --agreed
+
+# Reboot after install
+reboot --eject
+
+# Run the Setup Agent on first boot
+firstboot --disabled
+
+ignoredisk --only-use=sda
+
+# Keyboard layouts
+keyboard --vckeymap=us --xlayouts='us'
+
+# System language
+lang en_US.UTF-8
+
+# Network information
+{% for network in portgroup %}
+{% if network.dns=="0.0.0.0" or network.dns=="" %}
+{% set ns = "--nodns" %}
+{% else %}
+{% set ns = "--nameserver="+ network.dns %}
+{% endif %}
+{% if network.gateway=="0.0.0.0" or network.gateway=="" %}
+network  --bootproto=static --device={{ network.mac_address }} --onboot=yes --noipv6 --ip={{ network.ip }} --netmask={{ network.netmask }} --nodefroute {{ ns }}
+{% else %}
+network  --bootproto=static --device={{ network.mac_address }} --onboot=yes --noipv6 --ip={{ network.ip }} --netmask={{ network.netmask }} --gateway={{ network.gateway }} {{ ns }}
+{% endif %}
+{% endfor %}
+network  --hostname={{ hostname }}
+
+# Root password
+rootpw --plaintext {{ password }}
+
+selinux --disabled
+# System services
+services --disabled="chronyd" --enabled="snmpd"
+
+# Firewall
+firewall --enabled --port=2360:tcp --service=snmp --service=vnc-server
+
+# System timezone
+timezone Asia/Tehran --isUtc --nontp
+{% if pkgs=="gui" or pkgs=="gui_db_11.2" or pkgs=="gui_db_12.2" %}
+
+# X Window System configuration information
+xconfig  --startxonboot
+{% endif %}
+
+zerombr
+
+# System bootloader configuration
+{% if uefi == "yes" or uefi==true %}
+bootloader --location=partition --driveorder=sda --append="nomodeset crashkernel=auto"
+{% else %}
+bootloader --append=" crashkernel=auto" --location=mbr --boot-drive=sda
+{% endif %}
+
+# Partition clearing information
+clearpart --all --initlabel
+
+# Disk partitioning information
+# partitioning_type= lvm, plain
+# fs_type= ext2, ext3, ext4, xfs, vfat
+# nohome: disable home part creation (value must be --nohome)
+
+{% if root_size==0 or root_size=="0" %}
+{% if home=="yes" or home %}
+autopart --type={{ partitioning_type }} --fstype={{ fs_type }}
+{% else %}
+autopart --type={{ partitioning_type }} --fstype={{ fs_type }} --nohome
+{% endif %}
+{% else %}
+part /boot --fstype="{{ fs_type }}" --ondisk=sda --size=512
+# add requested partitions
+reqpart
+{% if partitioning_type == "lvm" %}
+part pv.01 --size 1 --grow --ondisk=sda
+volgroup vg pv.01
+{% if swap_size==0 or swap_size=="0" %}
+logvol swap  --name=swap --vgname=vg --fstype="swap" --recommended
+{% else %}
+logvol swap  --name=swap --vgname=vg --fstype="swap" --size={{ swap_size * 1024 }}
+{% endif %}
+{% if u01=="yes" or u01==true %}
+logvol /  --name=root --vgname=vg --fstype="{{ fs_type }}" --size={{ root_size * 1024 }}
+logvol /u01  --name=u01 --vgname=vg --fstype="{{ fs_type }}" --size=1 --grow
+{% else %}
+logvol /  --name=root --vgname=vg --fstype="{{ fs_type }}" --size={{ root_size * 1024 }} --grow
+{% endif %}
+{% elif partitioning_type == "plain" %}
+{% if swap_size==0 or swap_size=="0" %}
+part swap --name=swap --fstype="swap" --recommended
+{% else %}
+part swap --name=swap --fstype="swap" --size={{ swap_size * 1024 }}
+{% endif %}
+{% if u01=="yes" or u01==true %}
+part / --name=root --fstype="{{ fs_type }}" --size={{ root_size * 1024 }}
+part /u01 --name=u01 --fstype="{{ fs_type }}" --grow --size=1
+{% else %}
+part / --name=root --fstype="{{ fs_type }}" --size={{ root_size * 1024 }} --grow
+{% endif %}
+{% endif %}
+{% endif %}
+%packages
+net-snmp
+net-tools
+telnet
+{% if pkgs=="minimal" %}
+@^minimal
+@core
+chrony
+kexec-tools
+{% elif pkgs=="gui" %}
+@^graphical-server-environment
+@base
+@core
+@desktop-debugging
+@dial-up
+@fonts
+@gnome-desktop
+@guest-agents
+@guest-desktop-agents
+@hardware-monitoring
+@input-methods
+@internet-browser
+@multimedia
+@print-client
+@x11
+kexec-tools
+{% elif pkgs=="gui_db_11.2" %}
+@^graphical-server-environment
+@base
+@core
+@desktop-debugging
+@dial-up
+@fonts
+@gnome-desktop
+@guest-agents
+@guest-desktop-agents
+@hardware-monitoring
+@input-methods
+@internet-browser
+@multimedia
+@print-client
+@x11
+binutils
+compat-libstdc++-33
+compat-libstdc++-33.i686
+gcc
+gcc-c++
+glibc
+glibc.i686
+glibc-devel
+glibc-devel.i686
+ksh
+libgcc
+libgcc.i686
+libstdc++
+libstdc++.i686
+libstdc++-devel
+libstdc++-devel.i686
+libaio
+libaio.i686
+libaio-devel
+libaio-devel.i686
+libXext
+libXext.i686
+libXtst
+libXtst.i686
+libX11
+libX11.i686
+libXau
+libXau.i686
+libxcb
+libxcb.i686
+libXi
+libXi.i686
+make
+sysstat
+unixODBC
+unixODBC-devel
+zlib-devel
+elfutils-libelf-devel
+kexec-tools
+{% elif pkgs=="gui_db_12.2" %}
+@^graphical-server-environment
+@base
+@core
+@desktop-debugging
+@dial-up
+@fonts
+@gnome-desktop
+@guest-agents
+@guest-desktop-agents
+@hardware-monitoring
+@input-methods
+@internet-browser
+@multimedia
+@print-client
+@x11
+kexec-tools
+binutils
+compat-libcap1
+compat-libstdc++-33
+compat-libstdc++-33.i686
+glibc
+glibc.i686
+glibc-devel
+glibc-devel.i686
+ksh
+libaio
+libaio.i686
+libaio-devel
+libaio-devel.i686
+libX11
+libX11.i686
+libXau
+libXau.i686
+libXi
+libXi.i686
+libXtst
+libXtst.i686
+libgcc
+libgcc.i686
+libstdc++
+libstdc++.i686
+libstdc++-devel
+libstdc++-devel.i686
+libxcb
+libxcb.i686
+make
+nfs-utils
+net-tools
+smartmontools
+sysstat
+unixODBC
+unixODBC-devel
+gcc
+gcc-c++
+libXext
+libXext.i686
+zlib-devel
+zlib-devel.i686
+{% endif %}
+%end
+%addon com_redhat_kdump --enable --reserve-mb='auto'
+%end

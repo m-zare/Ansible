@@ -1,0 +1,57 @@
+---
+# kickstart web server directory
+ks_path: /root/volumes/ks_data
+# vlaue: 6 or 7
+distro: 7
+# kickstart vars
+# list
+network_list:
+  - mac_address: mng_mac
+  # value: ip address
+    ip:
+    # value: netmask
+    netmask:
+    # value: gateway
+    gateway:
+    # dns: should be like (
+    # value: "" or --nameserver=192.168.2.1,192.168.3.1 or --nodns
+    dns:
+# in case of 2 or more network uncomment block
+#   - mac_address: srv_mac
+#     # value: ip address
+#     ip:
+#     # value: netmask
+#     netmask:
+#     # value: gateway
+#     gateway:
+#     # nodefroute: disable default route
+#     # value: "" or --nodefroute
+#     nodefroute: 
+#     # dns: should be like (
+#     # value: "" or --nameserver=192.168.2.1,192.168.3.1 or --nodns
+#     dns:
+# value: hostname
+hostname:
+# value: root password
+password:
+# value: lvm, plain
+partitioning_type:
+# value: ext2, ext3, ext4, xfs, vfat
+fs_type:
+# all size in MB
+# set swap_size to 0 for recommendation
+# value: number
+swap_size:
+# value: number
+# set root_size to 0 for autopart enabled
+root_size:
+# value: yes or no
+u01:
+# value: core, gui, or gui_db
+pkgs:
+# value: yes or no
+uefi: 
+# 7 only parameters
+# create a seprate home partition
+# value: yes or no
+home:

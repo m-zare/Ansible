@@ -1,0 +1,10 @@
+- name: Copy Kickstart script which has been modified for the packages to the web server.
+  template:
+    src: "centos{{ distro }}.cfg.j2"
+    dest: "{{ ks_path }}/centos{{ distro }}.cfg"
+
+- name: create rhel ks file
+  copy:
+    remote_src: yes
+    src: "{{ ks_path }}/centos{{ distro }}.cfg"
+    dest: "{{ ks_path }}/rhel{{ distro }}.cfg"

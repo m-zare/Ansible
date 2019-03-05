@@ -1,0 +1,5 @@
+---
+ks_path: /root/volumes/ks_data
+portgroup:
+- mac_address: mng_mac
+- mac_address: srv_mac
