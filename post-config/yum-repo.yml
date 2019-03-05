@@ -1,0 +1,5 @@
+---
+- name: Add local repositories
+  hosts: all
+  roles:
+    - yum-repo

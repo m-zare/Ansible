@@ -1,0 +1,33 @@
+- name: create bkp dir
+  file:
+    path: /etc/yum.repos.d/bkp
+    state: directory
+    mode: 0755
+
+- name: Find /etc/yum.repos.d/ files ending with .repo
+  find:
+    paths: /etc/yum.repos.d/
+    patterns: '*.repo'
+  register: repos
+
+- name: add repos to bkp dir
+  copy:
+    src: "{{ item.path }}"
+    dest: /etc/yum.repos.d/bkp
+    remote_src: yes
+  loop: "{{ repos.files }}"
+
+- name: remove repos
+  file:
+    path: "{{ item.path }}"
+    state: absent
+  loop: "{{ repos.files }}"
+
+- name: copy local repository
+  copy:
+    src: "{{ ansible_distribution }}-{{ ansible_distribution_major_version}}.repo"
+    dest: /etc/yum.repos.d/
+
+#https://docs.ansible.com/ansible/latest/modules/net_static_route_module.html
+- name: configure repository static route
+  command: route add -host 192.168.18.21/32 gw {{mng_gw}}

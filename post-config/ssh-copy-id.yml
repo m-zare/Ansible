@@ -1,0 +1,5 @@
+---
+- name: configure passwordless ssh authentication on a remote machine
+  hosts: localhost
+  roles:
+    - role: ssh-copy-id
