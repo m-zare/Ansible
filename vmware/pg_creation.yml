@@ -1,0 +1,6 @@
+---
+- name: Create portgroup
+  hosts: localhost
+  gather_facts: no
+  roles:
+    - pg-create

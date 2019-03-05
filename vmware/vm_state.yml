@@ -1,0 +1,6 @@
+---
+- name: Change VMware machine state
+  hosts: localhost
+  gather_facts: no
+  roles:
+    - vm-state

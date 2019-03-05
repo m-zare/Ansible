@@ -1,0 +1,6 @@
+---
+- name: Create VMware virtual machine
+  hosts: localhost
+  gather_facts: no
+  roles:
+    - vm-create

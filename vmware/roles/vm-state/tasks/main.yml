@@ -1,0 +1,25 @@
+#machine
+#https://docs.ansible.com/ansible/latest/modules/vmware_guest_module.html
+- name: Change virtual machine state
+  vmware_guest:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    cluster: "{{ cluster_name }}"
+    validate_certs: no
+    name: "{{ machine_name }}"
+    state: "{{ status }}"
+  delegate_to: localhost
+  when: machine_name is defined
+
+- name: Change virtual machine state
+  vmware_guest:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    cluster: "{{ cluster_name }}"
+    validate_certs: no
+    name: "{{ machine_id }} - {{ os }} {{ distro }} - {{ machine_usage }} - {{ project_name }}"
+    state: "{{ status }}"
+  delegate_to: localhost
+  when: machine_id is defined

@@ -1,0 +1,10 @@
+- name: Set NTP setting for all ESXi Host in given Cluster
+  vmware_host_ntp:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    cluster_name: "{{ cluster_name }}"
+    state: present
+    ntp_servers:
+        - 0.192.168.10.31
+  delegate_to: localhost

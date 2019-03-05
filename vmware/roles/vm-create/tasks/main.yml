@@ -1,0 +1,59 @@
+#machine
+#https://docs.ansible.com/ansible/latest/modules/vmware_guest_module.html
+- name: Create a virtual machine on given ESXi hostname
+  vmware_guest:
+    annotation: "Ansible created vm."
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ datacenter }}"
+    cluster: "{{ cluster_name }}"
+    validate_certs: no
+    folder: "{{ parent_folder }}/{{ vm_folder }}"
+    name: "{{ machine_id }} - {{ os }} {{ distro }} - {{ machine_usage }} - {{ project_name }}"
+    state: present
+    guest_id: "{{ guest_id }}"
+    datastore: "{{ datastore_name }}"
+   
+    disk:
+    - size_gb: "{{ disk_size }}"
+      type: thin
+      
+    hardware:
+      memory_mb: "{{ memory_size * 1024 }}"
+      hotadd_memory: True
+      
+      num_cpus: "{{ core * cpu_per_soc }}"
+
+      # Value should be multiple of num_cpus
+      num_cpu_cores_per_socket: "{{ cpu_per_soc }}"
+      hotadd_cpu: True
+
+    networks:
+    # mng
+    - name: "VDS-PG-{{ portgroup[0].vlan_id }}-{{ portgroup[0].usage }}-{{ project_name }}"
+      dvswitch_name: "{{ portgroup[0].dswitch_name | default('vds-VM',true) }}"
+      device_type: "{{ portgroup[0].type | default('vmxnet3',true) }}"
+      type: "static"
+      start_connected: true
+
+    # srv
+    - name: "VDS-PG-{{ portgroup[1].vlan_id }}-{{ portgroup[1].usage }}-{{ project_name }}"
+      dvswitch_name: "{{ portgroup[1].dswitch_name | default('vds-VM',true) }}"
+      device_type: "{{ portgroup[1].type | default('vmxnet3',true) }}"
+      type: "static"
+      start_connected: true
+
+    # pxe
+    - name: "VDS-PG-1400-M-Ansible"
+      dvswitch_name: "vds-VM"
+      device_type: "vmxnet3"
+      type: "dhcp"
+      start_connected: true
+
+    cdrom:
+      type: iso
+      iso_path: "[{{ iso_datastore }}] iso/{{ iso_name }}"
+
+  delegate_to: localhost
+  register: deploy_vm

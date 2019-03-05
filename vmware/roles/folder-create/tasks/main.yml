@@ -1,0 +1,27 @@
+#folder
+#https://docs.ansible.com/ansible/latest/modules/vcenter_folder_module.html
+- name: Create parent folder on given datacenter
+  vcenter_folder:
+    hostname: "{{ vcenter_hostname | default('192.168.10.180',true) }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ datacenter }}"
+    folder_name: "{{ parent_folder }}"
+    folder_type: "{{ folder_type }}"
+    validate_certs: no
+    state: present
+  when: parent_folder is defined
+  delegate_to: localhost
+
+- name: Create a VM folder on given datacenter
+  vcenter_folder:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    datacenter: "{{ datacenter }}"
+    parent_folder: "{{ parent_folder }}"
+    folder_name: "{{ vm_folder }}"
+    folder_type: "{{ folder_type }}"
+    validate_certs: no
+    state: present
+  delegate_to: localhost

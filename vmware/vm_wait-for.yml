@@ -1,0 +1,6 @@
+---
+- name: Wait for vm ssh port
+  hosts: localhost
+  gather_facts: no
+  roles:
+    - vm-wait-for

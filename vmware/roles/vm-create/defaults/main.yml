@@ -1,0 +1,14 @@
+---
+vcenter_hostname: 192.168.10.180
+datacenter: "DC"
+cluster_name: "Hekmat"
+parent_folder: ""
+vm_folder: "/"
+guest_id: "centos64Guest"
+datastore_name: "standard-sDRS"
+disk_size: 20
+memory_size: 4096
+cpu: 4
+cpu_per_soc: 2
+iso_datastore: ds-B-v2-standard
+iso_name: CentOS-7-x86_64-DVD-1810.iso

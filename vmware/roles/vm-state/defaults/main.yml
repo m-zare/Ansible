@@ -1,0 +1,4 @@
+---
+vcenter_hostname: 192.168.10.180
+datacenter: "DC"
+status: "powredon"

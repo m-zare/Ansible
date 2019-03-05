@@ -1,0 +1,16 @@
+- name: Create vlan portgroup
+  vmware_dvs_portgroup:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    #usage: WEB, M-WEB, APP, M-APP, DB, M-DB, DCP
+    portgroup_name: "VDS-PG-{{ item.vlan_id }}-{{ item.usage }}-{{ project_name }}"
+    switch_name: "{{ item.dswitch_name }}"
+    vlan_id: "{{ item.vlan_id }}"
+    num_ports: 4
+    portgroup_type: earlyBinding
+    validate_certs: no
+    state: present
+  delegate_to: localhost
+  with_items: "{{ portgroup }}"
+
